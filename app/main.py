@@ -7,7 +7,7 @@ import tempfile
 import requests
 
 AUTH_URL = "https://autenticacao.sapi.serpro.gov.br/authenticate"
-BASIC_AUTH_HEADER = "Authorization:Basic ZGphUjIxUEdvWXAxaXlLMm4yQUNPSDlSRWRVYjpPYlJzQUpXT0w0ZnYyVHAyN0QxdmQ4ZkIzT3RlCg"
+BASIC_AUTH_HEADER = "Authorization:Basic aTlvbFZxeXJ0U0VYM04zNzNiU1Rpc1MxTjFvYTpJUUxWRmYwY3lPRTVUZmxnZldyWTd6ZE94Q0lh"
 ROLE_HEADER = "Role-Type:TERCEIROS"
 CONTENT_TYPE_HEADER = "Content-Type:application/x-www-form-urlencoded"
 
