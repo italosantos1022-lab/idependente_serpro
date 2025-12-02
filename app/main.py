@@ -28,6 +28,20 @@ def download_certificate(url: str, destination: str) -> None:
             cert_file.write(chunk)
 
 
+def resolve_authorization_header(authorization: str | None) -> str:
+    value = authorization or os.getenv("AUTHORIZATION")
+
+    if value:
+        sanitized_value = value.strip()
+        return (
+            sanitized_value
+            if sanitized_value.lower().startswith("authorization:")
+            else f"Authorization:{sanitized_value}"
+        )
+
+    return BASIC_AUTH_HEADER
+
+
 def build_curl_command(cert_path: str, cert_password: str, authorization_header: str) -> list[str]:
     return [
         "curl",
@@ -55,15 +69,11 @@ def build_curl_command(cert_path: str, cert_password: str, authorization_header:
 async def authenticate(payload: CertificateRequest) -> str:
     cert_url = payload.cert_url or os.getenv("CERT_URL")
     cert_password = payload.cert_password or os.getenv("CERT_PASSWORD", "")
-    authorization = payload.authorization or os.getenv("AUTHORIZATION")
 
     if not cert_url:
         raise HTTPException(status_code=400, detail="Certificate URL is required")
 
-    if authorization:
-        auth_header = authorization if authorization.lower().startswith("authorization:") else f"Authorization:{authorization}"
-    else:
-        auth_header = BASIC_AUTH_HEADER
+    auth_header = resolve_authorization_header(payload.authorization)
 
     with tempfile.TemporaryDirectory() as temp_dir:
         cert_path = os.path.join(temp_dir, "arquivo_certificado.p12")
