@@ -17,6 +17,7 @@ app = FastAPI()
 class CertificateRequest(BaseModel):
     cert_url: str | None = None
     cert_password: str | None = None
+    authorization: str | None = None
 
 
 def download_certificate(url: str, destination: str) -> None:
@@ -27,7 +28,7 @@ def download_certificate(url: str, destination: str) -> None:
             cert_file.write(chunk)
 
 
-def build_curl_command(cert_path: str, cert_password: str) -> list[str]:
+def build_curl_command(cert_path: str, cert_password: str, authorization_header: str) -> list[str]:
     return [
         "curl",
         "-s",
@@ -35,7 +36,7 @@ def build_curl_command(cert_path: str, cert_password: str) -> list[str]:
         "-X",
         "POST",
         "-H",
-        BASIC_AUTH_HEADER,
+        authorization_header,
         "-H",
         ROLE_HEADER,
         "-H",
@@ -54,13 +55,19 @@ def build_curl_command(cert_path: str, cert_password: str) -> list[str]:
 async def authenticate(payload: CertificateRequest) -> str:
     cert_url = payload.cert_url or os.getenv("CERT_URL")
     cert_password = payload.cert_password or os.getenv("CERT_PASSWORD", "")
+    authorization = payload.authorization or os.getenv("AUTHORIZATION")
 
     if not cert_url:
         raise HTTPException(status_code=400, detail="Certificate URL is required")
 
+    if authorization:
+        auth_header = authorization if authorization.lower().startswith("authorization:") else f"Authorization:{authorization}"
+    else:
+        auth_header = BASIC_AUTH_HEADER
+
     with tempfile.TemporaryDirectory() as temp_dir:
         cert_path = os.path.join(temp_dir, "arquivo_certificado.p12")
         download_certificate(cert_url, cert_path)
-        command = build_curl_command(cert_path, cert_password)
+        command = build_curl_command(cert_path, cert_password, auth_header)
         process = subprocess.run(command, capture_output=True, text=True)
         return process.stdout or process.stderr
